@@ -17,6 +17,10 @@ android_app_import {
         "Aperture",
         "Camera2",
     ],
+    optional_uses_libs: [
+        "androidx.window.extensions",
+        "androidx.window.sidecar",
+    ],
     required: [
         "libofflineproc_jni",
         "ntcam_offlineproc",
