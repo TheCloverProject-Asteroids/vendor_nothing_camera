@@ -1,18 +1,21 @@
 # Nothing Camera for Nothing Phone (3a)
 
-Nothing Camera (`com.nothing.camera`) packaged for AOSPA on asteroids, laid out
-as an extract-utils vendor repository. Clone to `vendor/nothing/camera` and
-run `git lfs pull`.
+Nothing Camera (`com.nothing.camera`) for the Nothing Phone (3a) / (3a) Pro
+(asteroids) on AOSP-based ROMs, as a drop-in extract-utils vendor repository.
+Clone to `vendor/nothing/camera` and run `git lfs pull`.
 
 ## Integration
 
 ```make
 # BoardConfig.mk
-include vendor/nothing/camera/BoardConfigCamera.mk
+-include vendor/nothing/camera/BoardConfigCamera.mk
 
 # device.mk
-$(call inherit-product, vendor/nothing/camera/nothing-camera.mk)
+$(call inherit-product-if-exists, vendor/nothing/camera/nothing-camera.mk)
 ```
+
+Both are optional includes, so the device still builds without this repo
+(Aperture keeps working, Nothing Camera is simply absent).
 
 Required in the device tree:
 
@@ -33,8 +36,10 @@ Required in the device tree:
 | `NTCamera.apk` | stored with Git LFS (`git lfs pull` after cloning). Built from `app/Android.bp` (symlinked APK) so it is dexpreopted like stock. See `patches/NTCamera.md` for its bytecode changes. |
 | `libofflineproc_jni` | NTCamera's JNI for `media.offline` |
 | `offlineproc/` | `libofflineproc_shim`: `IOfflineProcService`/`IOfflineProcClient` (AIDL reconstructed from Nothing's `libcamera_client`, same transaction codes and vtables) plus `OfflineParameters` and `OfflineProcClient` with Nothing's object layout. `ntcam_offlineproc`: lazy `media.offline` service. |
+| `libntcam_client` | system_ext client library `libofflineproc_jni` links against |
+| `shims/libntcam_session_shim` | prebuilt, see below |
 | `vendor.noth.hardware.camera-service` | Nothing's algorithm HAL (`INtCamService`), run in `hal_camera_default` (QTI camera provider domain) |
-| `sepolicy/` | Mirrors the stock policy for the above |
+| `sepolicy/` | Mirrors the stock policy for the above, plus the `platform_app`/`platform_app_36` client rules |
 
 ### Why `media.offline` exists
 
@@ -51,19 +56,43 @@ the camera holds it.
 ./extract-files.py <path to Nothing OS dump>   # regenerates makefiles too
 ```
 
-Then re-apply `patches/NTCamera.md` to the new APK.
+`NTCamera.apk`, `libofflineproc_jni`, `libntcam_client` and
+`libQnnHtpV73Stub` are not in stock firmware and are pinned by SHA1 in
+`proprietary-files.txt`, so extract-utils keeps the copies in this repo.
+Drop the pin and re-apply `patches/NTCamera.md` to move to a new APK.
 
 ## Device-tree side (not in this repo)
 
-These pieces live in `vendor/nothing/asteroids` / `device/nothing/asteroids`
-and must be present for post-processing to work:
+Add these to the device's `extract-files.py` so they survive re-extraction:
 
-- `libntcam_session_shim.so` as the first `DT_NEEDED` of
-  `vendor.qti.camera.provider-service_64`: it tags camera sessions with
-  `package_name=com.nothing.camera` so CamX selects the Nothing pipeline.
-- `com.nothing.node.bokehhdr.so` blob fixup (`cbz x23` at 0xc7d8 retargeted to
-  0xc6ac) so Portrait falls back to `/data/vendor/camera` calibration files:
-  `.binary_regex_replace(b'\xb7\x83\x5d\xf8\x77\xf1\xff\xb4', b'\xb7\x83\x5d\xf8\xb7\xf6\xff\xb4')`
+```python
+lib_fixups = {
+    ...
+    ('libntcam_session_shim',): lib_fixup_remove,  # module lives here, keep the device buildable without it
+}
+
+blob_fixups = {
+    # Load libntcam_session_shim first: it wraps hw_get_module() and tags
+    # sessions from com.nothing.camera with package_name/activity_name so
+    # CamX selects the Nothing pipeline.
+    'vendor/bin/hw/vendor.qti.camera.provider-service_64': blob_fixup()
+        .add_needed('libntcam_session_shim.so'),
+    # Portrait: cbz x23 at 0xc7d8 retargeted to 0xc6ac so the node falls back
+    # to the /data/vendor/camera calibration files.
+    'vendor/lib64/camera/node/com.nothing.node.bokehhdr.so': blob_fixup()
+        .binary_regex_replace(b'\xb7\x83\x5d\xf8\x77\xf1\xff\xb4', b'\xb7\x83\x5d\xf8\xb7\xf6\xff\xb4'),
+}
+```
+
+and mark the provider `;DISABLE_CHECKELF` in `proprietary-files.txt`, since
+its new `DT_NEEDED` is not visible from the device's soong namespace.
+
+The HAL needs `hal_camera_default` to keep its stock QTI permissions (DSP,
+`vendor_camera_prop`, postproc hwservice); no changes to
+`device/qcom/sepolicy_vndr` are needed.
+
+After flashing, run `adb shell pm clear com.nothing.camera` once to drop
+stale capture queue entries left by earlier builds.
 
 ## Credits
 
