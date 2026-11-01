@@ -33,7 +33,7 @@ Required in the device tree:
 | `NTCamera.apk` | stored with Git LFS (`git lfs pull` after cloning). Built from `app/Android.bp` (symlinked APK) so it is dexpreopted like stock. See `patches/NTCamera.md` for its bytecode changes. |
 | `libofflineproc_jni` | NTCamera's JNI for `media.offline` |
 | `offlineproc/` | `libofflineproc_shim`: `IOfflineProcService`/`IOfflineProcClient` (AIDL reconstructed from Nothing's `libcamera_client`, same transaction codes and vtables) plus `OfflineParameters` and `OfflineProcClient` with Nothing's object layout. `ntcam_offlineproc`: lazy `media.offline` service. |
-| `vendor.noth.hardware.camera-service` | Nothing's algorithm HAL (`INtCamService`), run in the stock `vendor_hal_camera_default` domain |
+| `vendor.noth.hardware.camera-service` | Nothing's algorithm HAL (`INtCamService`), run in `hal_camera_default` (QTI camera provider domain) |
 | `sepolicy/` | Mirrors the stock policy for the above |
 
 ### Why `media.offline` exists
@@ -52,6 +52,18 @@ the camera holds it.
 ```
 
 Then re-apply `patches/NTCamera.md` to the new APK.
+
+## Device-tree side (not in this repo)
+
+These pieces live in `vendor/nothing/asteroids` / `device/nothing/asteroids`
+and must be present for post-processing to work:
+
+- `libntcam_session_shim.so` as the first `DT_NEEDED` of
+  `vendor.qti.camera.provider-service_64`: it tags camera sessions with
+  `package_name=com.nothing.camera` so CamX selects the Nothing pipeline.
+- `com.nothing.node.bokehhdr.so` blob fixup (`cbz x23` at 0xc7d8 retargeted to
+  0xc6ac) so Portrait falls back to `/data/vendor/camera` calibration files:
+  `.binary_regex_replace(b'\xb7\x83\x5d\xf8\x77\xf1\xff\xb4', b'\xb7\x83\x5d\xf8\xb7\xf6\xff\xb4')`
 
 ## Credits
 

@@ -7,8 +7,10 @@ $(call soong_config_set,camera,package_name,com.nothing.camera)
 
 PRODUCT_PACKAGES += \
     NTCamera \
-    libofflineproc_shim \
-    ntcam_offlineproc
+    libntcam_client
+
+PRODUCT_COPY_FILES += \
+    vendor/nothing/camera/configs/init.nothing.camera.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/init.nothing.camera.rc
 
 PRODUCT_SYSTEM_EXT_PROPERTIES += \
     persist.vendor.camera.privapp.list=com.nothing.camera \

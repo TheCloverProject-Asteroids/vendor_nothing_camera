@@ -1,7 +1,7 @@
 # NTCamera bytecode changes
 
-The shipped `NTCamera.apk` (16.0.01.25.00) differs from Nothing's build only in
-`classes4.dex`. Each change wraps a call that reaches Nothing OS framework code
+The shipped `NTCamera.apk` (16.0.01.25.00) differs from Nothing's build in
+`classes4.dex` and `classes5.dex`. Each change in `classes4.dex` wraps a call that reaches Nothing OS framework code
 in a `catch java.lang.Error`, so a `NoClassDefFoundError`/`LinkageError` on a
 non-Nothing framework degrades the feature instead of crashing the camera:
 
@@ -12,6 +12,9 @@ non-Nothing framework degrades the feature instead of crashing the camera:
 | `CameraActivity.onCreate` | `new com.nothing.kafka.EventObserver(...)` | `nt-framework.jar` |
 | `AbstractBaseMode` / `AbstractModeImpl` / `AbstractModeImpl$1` | pending-capture cleanup `ContentResolver.query` and its error log | Nothing MediaProvider columns |
 | `SpecialTypeProvider$LRUCache.removeEldestEntry` | `Long.parseLong` on cache file names | - |
+| `SettingCharacteristics.init` / `SettingContext.getCameraId` | First-run fallback when `pref_camera_id_key` is -1/null to prevent NPE in `CameraCharacteristics.get` | - |
+| `NcfBokehMode.getCalibrationData` | Null check on `QC_DUAL_MODULE_INFO` and catch `Exception` before `.length` to prevent NPE in Portrait mode | Dual-camera calibration metadata |
+| `UFSManager.saveImage` / `updateRequestPriority` | Null check `mSaveReQuestHandle` before `removeMessages` / `post` to prevent shutter capture NPE when HAL session drops | - |
 
 When updating the APK, re-apply every hunk below to the new `classes4.dex`
 (class/method names are stable across releases; register numbers may move).
@@ -145,4 +148,38 @@ Hunks are shown exactly as they exist in the shipped dex.
     .catch Ljava/lang/Exception; {:try_start_1 .. :try_end_1} :catch_0
     .catch Ljava/lang/Error; {:try_start_1 .. :try_end_1} :catch_1
 ```
+
+### com.nothing.camera.mode.NcfBokehMode
+.method private getCalibrationData()V
+```smali
+    invoke-virtual {v7, v2}, Landroid/hardware/camera2/CameraCharacteristics;->get(Landroid/hardware/camera2/CameraCharacteristics$Key;)Ljava/lang/Object;
+
+    move-result-object v2
+
+    check-cast v2, [B
+
+    if-nez v2, :cond_qc_ok
+
+    goto :catch_c2
+
+    :cond_qc_ok
+    ...
+    :try_end_c2
+    .catch Ljava/lang/Exception; {:try_start_9d .. :try_end_c2} :catch_c2
+```
+
+### com.nothing.algolib.cameraufs.UFSManager
+.method public saveImage(JLcom/nothing/algolib/cameraufs/NtCamUfsImage;)Z
+```smali
+    iget-object v0, p0, Lcom/nothing/algolib/cameraufs/UFSManager;->mSaveReQuestHandle:Landroid/os/Handler;
+
+    if-eqz v0, :cond_skip_save_remove
+
+    const/4 v3, 0x2
+
+    invoke-virtual {v0, v3}, Landroid/os/Handler;->removeMessages(I)V
+
+    :cond_skip_save_remove
+```
+
 

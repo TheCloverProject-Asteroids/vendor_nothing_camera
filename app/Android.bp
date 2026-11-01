@@ -23,6 +23,5 @@ android_app_import {
     ],
     required: [
         "libofflineproc_jni",
-        "ntcam_offlineproc",
     ],
 }

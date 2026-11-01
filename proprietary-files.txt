@@ -10,3 +10,10 @@ vendor/etc/init/vendor.noth.hardware.camera-service.rc
 vendor/etc/vintf/manifest/vendor.noth.hardware.camera-service.xml
 vendor/lib64/vendor.noth.hardware.camera-V1-ndk.so
 vendor/lib64/vendor.noth.hardware.camera-service-impl.so
+
+# Watermark fonts (libntcamskia)
+vendor/etc/camera/NdotFont/Ndot-55.otf
+vendor/etc/camera/Robotofont/Roboto-55.ttf
+vendor/etc/camera/SansCJKFont/NotoSansCJK.ttc
+vendor/lib64/libQnnHtpV73Stub.so
+system_ext/lib64/libntcam_client.so

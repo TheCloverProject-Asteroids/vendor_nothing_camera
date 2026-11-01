@@ -82,14 +82,13 @@ cc_prebuilt_library_shared {
                 "proprietary/system_ext/lib64/libofflineproc_jni.so",
             ],
             shared_libs: [
-                "libofflineproc_shim",
                 "libandroid_runtime",
                 "libutils",
                 "libbinder",
                 "libcutils",
                 "liblog",
                 "libui",
-                "libcamera_client",
+                "libntcam_client",
                 "libvndksupport",
                 "libnativewindow",
                 "libcamera_metadata",
@@ -146,4 +145,67 @@ cc_prebuilt_binary {
     prefer: true,
     relative_install_path: "hw",
     soc_specific: true,
+}
+
+cc_prebuilt_library_shared {
+    name: "libQnnHtpV73Stub",
+    owner: "nothing",
+    strip: {
+        none: true,
+    },
+    target: {
+        android_arm64: {
+            srcs: [
+                "proprietary/vendor/lib64/libQnnHtpV73Stub.so",
+            ],
+            shared_libs: [
+                "libc",
+                "libm",
+                "libdl",
+                "libcdsprpc",
+                "liblog",
+            ],
+        },
+    },
+    compile_multilib: "64",
+    prefer: true,
+    soc_specific: true,
+}
+
+cc_prebuilt_library_shared {
+    name: "libntcam_client",
+    owner: "nothing",
+    strip: {
+        none: true,
+    },
+    target: {
+        android_arm64: {
+            srcs: [
+                "proprietary/system_ext/lib64/libntcam_client.so",
+            ],
+            shared_libs: [
+                "android.hardware.common.fmq-V1-cpp",
+                "android.hardware.common-V2-cpp",
+                "camera_platform_flags_c_lib",
+                "framework-permission-aidl-cpp",
+                "lib-platform-compat-native-api",
+                "libbase",
+                "libbinder",
+                "libcamera_metadata",
+                "libcutils",
+                "libgui",
+                "liblog",
+                "libnativewindow",
+                "libpermission",
+                "libutils",
+                "libc++",
+                "libc",
+                "libm",
+                "libdl",
+            ],
+        },
+    },
+    compile_multilib: "64",
+    prefer: true,
+    system_ext_specific: true,
 }
