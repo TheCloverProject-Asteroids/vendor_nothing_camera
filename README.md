@@ -1,7 +1,7 @@
 # Nothing Camera for Nothing Phone (3a)
 
 Nothing Camera (`com.nothing.camera`) for the Nothing Phone (3a) / (3a) Pro
-(asteroids) on AOSP-based ROMs, as a drop-in extract-utils vendor repository.
+(asteroids), as a drop-in extract-utils vendor repository.
 Clone to `vendor/nothing/camera` and run `git lfs pull`.
 
 ## Integration
@@ -96,10 +96,10 @@ stale capture queue entries left by earlier builds.
 
 ## Credits
 
-- Omkar Chandorkar (Paranoid Android) - repository layout, extract-utils
+- Omkar Chandorkar - repository layout, extract-utils
   camera module and the libcamera_client shim approach, from
   [ThankYouMario/proprietary_vendor_nothing_camera@b61fb25c76](https://github.com/ThankYouMario/proprietary_vendor_nothing_camera/commit/b61fb25c762a8101420f243772b089e1b6d6c0aa)
-- Aniket (crdroid-asteroids) - working Nothing Camera bring-up on
+- Aniket - working Nothing Camera bring-up on
   asteroids used as a cross-reference for the post-processing interface
   relink and provider integration:
   [819622a22f](https://github.com/crdroid-asteroids/device_nothing_asteroids/commit/819622a22f79933503b60b2fb365e4b9e0173ce4),
