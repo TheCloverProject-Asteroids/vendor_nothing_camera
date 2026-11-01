@@ -17,6 +17,39 @@ $(call inherit-product-if-exists, vendor/nothing/camera/nothing-camera.mk)
 Both are optional includes, so the device still builds without this repo
 (Aperture keeps working, Nothing Camera is simply absent).
 
+## Requirements
+
+This repo is not enough on its own. The build also needs:
+
+- Android 17: the sepolicy uses `platform_app_36`, the domain platform signed
+  apps targeting SDK 36 run in. It does not exist on older releases.
+- A `libui_shim` module in the tree, linked by
+  `vendor.noth.hardware.camera-service-impl.so`.
+- `nothing-fwk` in the device tree with `com.nothing.NtFeaturesUtils`
+  exposing the feature ids the app reads by reflection
+  (`NTF_QCOM = 59`, `NTF_MTK = 60`, `NTF_PONG = 62`, `NTF_PACMAN = 63`,
+  `NTF_TETRIS = 64`, `NTF_ASTEROIDS = 80`, `NTF_ASTEROIDS_PLUS = 86`,
+  `NTF_JPN = 89`, `NTF_DRAGONITE = 110`, `NTF_BACKGROUND_RES_LIMIT = 115`),
+  and falling back to `ro.vendor.nothing.feature.diff.{device,plus}.Asteroids`
+  when no prop exists for `Build.DEVICE`.
+- The Nothing feature props, readable by `platform_app` and
+  `platform_app_36` (`get_prop(..., vendor_nothing_feature_prop)`):
+
+  ```
+  ro.vendor.nothing.feature.base=0xe24800001004458438124a040106b4247b97ffL
+  ro.vendor.nothing.feature.diff.device.Asteroids=0x241001a38fc01acc038d140ad44002d0842080L
+  ro.vendor.nothing.feature.diff.plus.Asteroids=0x4000000000000000000000L
+  ```
+- Nothing's common sepolicy, for the `vendor_ntf_file` type and
+  `com.nothing.camera.postproc.IPostProcService/default` labelled
+  `vendor_hal_camera_service`.
+- `hal_camera_default` with its stock QTI permissions (DSP,
+  `vendor_camera_prop`, postproc hwservice). No changes to the QTI vendor
+  sepolicy are needed.
+- The device's vendor tree (`vendor/nothing/asteroids`, imported by this
+  repo's soong namespace for `libntcamcore` and friends), extracted with the
+  rules below.
+
 The device tree also needs the extract rules listed under
 [Device-tree side](#device-tree-side-not-in-this-repo), all of which patch stock
 blobs that belong to the device.
@@ -98,10 +131,6 @@ vendor/lib64/vendor.qti.hardware.camera.postproc@1.0.so:vendor/lib64/vendor.qti.
 
 `DISABLE_CHECKELF` is needed because the provider's new `DT_NEEDED` lives in
 this repo, outside the device's soong namespace.
-
-The HAL needs `hal_camera_default` to keep its stock QTI permissions (DSP,
-`vendor_camera_prop`, postproc hwservice); no changes to
-`device/qcom/sepolicy_vndr` are needed.
 
 After flashing, run `adb shell pm clear com.nothing.camera` once to drop
 stale capture queue entries left by earlier builds.
