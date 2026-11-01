@@ -17,17 +17,9 @@ $(call inherit-product-if-exists, vendor/nothing/camera/nothing-camera.mk)
 Both are optional includes, so the device still builds without this repo
 (Aperture keeps working, Nothing Camera is simply absent).
 
-Required in the device tree:
-
-- `vendor/nothing/asteroids` must ship Nothing's
-  `vendor.qti.hardware.camera.postproc@1.0` interface library as
-  `vendor.qti.hardware.camera.postproc@1.0-nothing.so`, with
-  `libntofflinepostproc.so` and `vendor.qti.hardware.camera.postproc@1.0-service-impl.so`
-  relinked to it. Nothing extended `IPostProcSession` with `release()` under the
-  same package version, so the AOSP/QTI interface library breaks the in-HAL
-  post-processing path (`camerapostprocservice`) for every capture.
-- `vendor/lib64/libcameradecision.so` listed for extraction when building from
-  firmware whose `public.libraries.txt` names it.
+The device tree also needs the extract rules listed under
+[Device-tree side](#device-tree-side-not-in-this-repo), all of which patch stock
+blobs that belong to the device.
 
 ## Contents
 
@@ -72,6 +64,17 @@ lib_fixups = {
 }
 
 blob_fixups = {
+    # Nothing extended IPostProcSession with release() under the same package
+    # version, so the QTI interface library breaks the in-HAL post-processing
+    # path (camerapostprocservice) for every capture. Ship Nothing's under its
+    # own name and relink its users to it.
+    'vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-nothing.so': blob_fixup()
+        .fix_soname(),
+    (
+        'vendor/lib64/libntofflinepostproc.so',
+        'vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-service-impl.so',
+    ): blob_fixup()
+        .replace_needed('vendor.qti.hardware.camera.postproc@1.0.so', 'vendor.qti.hardware.camera.postproc@1.0-nothing.so'),
     # Load libntcam_session_shim first: it wraps hw_get_module() and tags
     # sessions from com.nothing.camera with package_name/activity_name so
     # CamX selects the Nothing pipeline.
@@ -84,8 +87,17 @@ blob_fixups = {
 }
 ```
 
-and mark the provider `;DISABLE_CHECKELF` in `proprietary-files.txt`, since
-its new `DT_NEEDED` is not visible from the device's soong namespace.
+and in `proprietary-files.txt`:
+
+```
+vendor/bin/hw/vendor.qti.camera.provider-service_64;DISABLE_CHECKELF
+vendor/lib64/libntofflinepostproc.so
+vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-service-impl.so
+vendor/lib64/vendor.qti.hardware.camera.postproc@1.0.so:vendor/lib64/vendor.qti.hardware.camera.postproc@1.0-nothing.so
+```
+
+`DISABLE_CHECKELF` is needed because the provider's new `DT_NEEDED` lives in
+this repo, outside the device's soong namespace.
 
 The HAL needs `hal_camera_default` to keep its stock QTI permissions (DSP,
 `vendor_camera_prop`, postproc hwservice); no changes to
