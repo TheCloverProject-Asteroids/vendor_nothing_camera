@@ -1,0 +1,15 @@
+//
+// SPDX-FileCopyrightText: Paranoid Android
+// SPDX-License-Identifier: Apache-2.0
+//
+
+android_app {
+    name: "CameraReviewTrampoline",
+    srcs: ["src/**/*.java"],
+    sdk_version: "current",
+    system_ext_specific: true,
+    certificate: "platform",
+    optimize: {
+        enabled: false,
+    },
+}

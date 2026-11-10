@@ -6,3 +6,7 @@ init_daemon_domain(ntcam_offlineproc)
 binder_use(ntcam_offlineproc)
 binder_service(ntcam_offlineproc)
 add_service(ntcam_offlineproc, ntcam_offlineproc_service)
+
+# Allow binder IPC between camera app (in appdomain) and ntcam_offlineproc
+binder_call(ntcam_offlineproc, appdomain)
+binder_call(appdomain, ntcam_offlineproc)

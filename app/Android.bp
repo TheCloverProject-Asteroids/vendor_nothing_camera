@@ -22,6 +22,9 @@ android_app_import {
         "androidx.window.sidecar",
     ],
     required: [
+        "CameraReviewTrampoline",
         "libofflineproc_jni",
+        "libofflineproc_shim",
+        "ntcam_offlineproc",
     ],
 }

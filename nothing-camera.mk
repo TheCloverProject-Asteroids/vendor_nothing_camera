@@ -9,7 +9,10 @@ PRODUCT_PACKAGES += \
     NTCamera \
     libntcam_client \
     libntcam_session_shim \
-    libglyph_lights_shim
+    libglyph_lights_shim \
+    ntcam_offlineproc \
+    libofflineproc_shim \
+    CameraReviewTrampoline
 
 PRODUCT_COPY_FILES += \
     vendor/nothing/camera/configs/init.nothing.camera.rc:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/init/init.nothing.camera.rc
