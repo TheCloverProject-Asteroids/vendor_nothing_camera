@@ -19,6 +19,13 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_SYSTEM_EXT_PROPERTIES += \
     persist.vendor.camera.privapp.list=com.nothing.camera \
-    ro.com.google.lens.oem_camera_package=com.nothing.camera
+    ro.com.google.lens.oem_camera_package=com.nothing.camera \
+    com.nothing.camera.debug.logcontrol=0 \
+    com.nothing.camera.debug.logcontrol.trace=0 \
+    com.nothing.camera.debug.logMoreDebugInfo=0 \
+    com.nothing.camera.debug.logMoreDebugInfoWriter=0 \
+    com.nothing.camera.show.debug.info=0 \
+    com.nothing.camera.perf.hint.enable=1 \
+    vendor.debug.camera.ForceHALJpegEncode=1
 
 $(call inherit-product, vendor/nothing/camera/camera-vendor.mk)
